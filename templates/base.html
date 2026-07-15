@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}NOVATION{% endblock %}</title>
+    <style>
+        body {
+            background: #0b0e11; color: #eaecef;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100vh; margin: 0;
+        }
+        .box {
+            background: #141920; border: 1px solid #1e2936; border-radius: 10px;
+            padding: 32px; width: 340px;
+        }
+        h1 { color: #f0b90b; font-size: 20px; margin-bottom: 20px; }
+        label { font-size: 12px; color: #6b7280; text-transform: uppercase; }
+        input, button {
+            width: 100%; box-sizing: border-box; padding: 10px; margin: 6px 0 14px 0;
+            background: #1e2936; border: 1px solid #1e2936; border-radius: 6px;
+            color: #eaecef; font-size: 14px;
+        }
+        button {
+            background: #f0b90b; color: #0b0e11; font-weight: 700; cursor: pointer; border: none;
+        }
+        button:hover { opacity: 0.9; }
+        a { color: #38bdf8; }
+        .flash { padding: 8px 12px; border-radius: 6px; margin-bottom: 14px; font-size: 13px; }
+        .flash.error { background: #3a1414; color: #ff8080; }
+        .flash.success { background: #0d2018; color: #00ff9d; }
+        .checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+        .checkbox-row input { width: auto; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

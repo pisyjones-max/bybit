@@ -1,0 +1,16 @@
+# Секреты — никогда не коммитить
+.env
+
+# База данных (Flask кладёт relative sqlite:/// пути в instance/)
+instance/
+*.db
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS/редакторы
+.DS_Store
+.vscode/

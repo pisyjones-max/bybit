@@ -1,0 +1,12 @@
+Flask==3.0.3
+Flask-Login==0.6.3
+Flask-SQLAlchemy==3.1.1
+cryptography==43.0.1
+dash==2.17.1
+plotly==5.24.1
+pandas==2.2.3
+numpy==1.26.4
+python-dotenv==1.0.1
+pybit==5.9.0
+gunicorn==22.0.0
+Werkzeug==3.0.4
