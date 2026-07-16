@@ -53,6 +53,7 @@ _engine_lock = threading.Lock()
 # ── Живая лента событий и статус для UI (по user_id) ───────────────
 live_status: dict[int, list[str]] = {}
 tape_events: deque = deque(maxlen=40)
+last_balance: dict[int, float] = {}   # кэш баланса USDT по user_id, обновляется движком
 
 
 def _get_user_session(user_id: int, api_key: str, api_secret: str) -> HTTP:
@@ -271,6 +272,7 @@ def _process_user(app, user: User):
 
     session = _get_user_session(user.id, api_key, api_secret)
     usdt_bal = _get_usdt_balance(session, user.id)
+    last_balance[user.id] = usdt_bal
 
     positions_by_symbol = {p.symbol: p for p in user.positions}
     open_count = sum(1 for p in positions_by_symbol.values() if p.state == "HOLDING")
@@ -329,6 +331,7 @@ def _process_user(app, user: User):
                                   price=fill_price, qty=qty, pnl=None)
                     db.session.add(trade)
                     usdt_bal -= cfg.buy_usdt
+                    last_balance[user.id] = usdt_bal
                     open_count += 1
                     msgs.append(f"🟢 BUY {symbol} @ ${fill_price:.5f} — {sd['desc']}")
             else:
