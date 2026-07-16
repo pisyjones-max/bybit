@@ -17,9 +17,12 @@ server.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY", "change-me-in-.env")
 
 _db_url = os.getenv("DATABASE_URL", "sqlite:///novation.db")
 if _db_url.startswith("postgres://"):
-    # Некоторые платформы (Railway/Heroku) выдают старую схему postgres://,
-    # а современный SQLAlchemy требует postgresql://
+    # Некоторые платформы (Railway/Heroku) выдают старую схему postgres://
     _db_url = _db_url.replace("postgres://", "postgresql://", 1)
+if _db_url.startswith("postgresql://"):
+    # Явно указываем драйвер pg8000 (чистый Python, без системных библиотек
+    # вроде libpq.so, которых может не быть в окружении хостинга)
+    _db_url = _db_url.replace("postgresql://", "postgresql+pg8000://", 1)
 server.config["SQLALCHEMY_DATABASE_URI"] = _db_url
 server.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
