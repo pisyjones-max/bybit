@@ -14,7 +14,13 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(
 
 server = Flask(__name__)
 server.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY", "change-me-in-.env")
-server.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///novation.db")
+
+_db_url = os.getenv("DATABASE_URL", "sqlite:///novation.db")
+if _db_url.startswith("postgres://"):
+    # Некоторые платформы (Railway/Heroku) выдают старую схему postgres://,
+    # а современный SQLAlchemy требует postgresql://
+    _db_url = _db_url.replace("postgres://", "postgresql://", 1)
+server.config["SQLALCHEMY_DATABASE_URI"] = _db_url
 server.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(server)
