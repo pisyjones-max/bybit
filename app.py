@@ -1,7 +1,7 @@
 import os
 import logging
 
-from flask import Flask, redirect, url_for, request
+from flask import Flask, redirect, url_for, request, render_template
 from flask_login import LoginManager, login_required, current_user
 from dotenv import load_dotenv
 
@@ -50,6 +50,12 @@ def index():
 @login_required
 def dashboard():
     return redirect("/dashboard/")
+
+
+@server.route("/help")
+def help_page():
+    """Публичная страница-инструкция: объясняет каждый показатель и настройку человеческим языком."""
+    return render_template("help.html")
 
 
 # Защищаем сам Dash-роут: любой запрос к /dashboard/... требует логина

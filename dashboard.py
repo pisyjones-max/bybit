@@ -8,7 +8,7 @@ import engine
 from models import db, Position, Trade
 
 C = {
-    "bg": "#0b0e11", "card": "#141920", "bdr": "#1e2936",
+    "bg": "#05070a", "card": "#12161c", "bdr": "#1e2936",
     "gold": "#f0b90b", "green": "#00ff9d", "red": "#ff4d4d",
     "gray": "#6b7280", "blue": "#38bdf8", "purp": "#c084fc", "dim": "#1e2936",
 }
@@ -16,24 +16,89 @@ SIG_C = {"BUY": C["green"], "WEAK_BUY": "#86efac", "SELL": C["red"], "NEUTRAL": 
 SIG_T = {"BUY": "🟢 BUY", "WEAK_BUY": "🟡 WEAK", "SELL": "🔴 SELL", "NEUTRAL": "⬜"}
 
 GLOBAL_CSS = """
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+* { box-sizing: border-box; }
+
+body {
+    background:
+        radial-gradient(circle at 12% -10%, rgba(240,185,11,.08), transparent 40%),
+        radial-gradient(circle at 90% 110%, rgba(56,189,248,.07), transparent 45%),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.022) 0px, rgba(255,255,255,.022) 1px, transparent 1px, transparent 34px),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.022) 0px, rgba(255,255,255,.022) 1px, transparent 1px, transparent 34px),
+        #05070a !important;
+}
+
 @keyframes pulse-green {
-    0%   { box-shadow: 0 0 0 0 rgba(0,255,157,0.7); }
-    70%  { box-shadow: 0 0 0 16px rgba(0,255,157,0); }
-    100% { box-shadow: 0 0 0 0 rgba(0,255,157,0); }
+    0%   { box-shadow: 0 0 0 0 rgba(0,255,157,0.7), 0 0 22px rgba(0,255,157,.25); }
+    70%  { box-shadow: 0 0 0 16px rgba(0,255,157,0), 0 0 22px rgba(0,255,157,.25); }
+    100% { box-shadow: 0 0 0 0 rgba(0,255,157,0), 0 0 22px rgba(0,255,157,.25); }
 }
 @keyframes pulse-purp {
-    0%   { box-shadow: 0 0 0 0 rgba(192,132,252,0.8); }
-    70%  { box-shadow: 0 0 0 20px rgba(192,132,252,0); }
-    100% { box-shadow: 0 0 0 0 rgba(192,132,252,0); }
+    0%   { box-shadow: 0 0 0 0 rgba(192,132,252,0.8), 0 0 22px rgba(192,132,252,.3); }
+    70%  { box-shadow: 0 0 0 20px rgba(192,132,252,0), 0 0 22px rgba(192,132,252,.3); }
+    100% { box-shadow: 0 0 0 0 rgba(192,132,252,0), 0 0 22px rgba(192,132,252,.3); }
 }
 @keyframes tape-scroll {
     0%   { transform: translateX(0); }
     100% { transform: translateX(-50%); }
 }
+@keyframes live-blink {
+    0%, 100% { opacity: 1; box-shadow: 0 0 8px 2px rgba(0,255,157,.7); }
+    50%      { opacity: .35; box-shadow: 0 0 2px 0 rgba(0,255,157,.3); }
+}
+@keyframes logo-glow {
+    0%, 100% { text-shadow: 0 0 14px rgba(240,185,11,.55), 0 0 28px rgba(240,185,11,.2); }
+    50%      { text-shadow: 0 0 20px rgba(240,185,11,.8), 0 0 40px rgba(240,185,11,.35); }
+}
+@keyframes rise-fade {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
 .pulse-buy  { animation: pulse-green 1.2s ease-out infinite; border: 2px solid #00ff9d !important; }
 .pulse-purp { animation: pulse-purp  1.0s ease-out infinite; border: 2px solid #c084fc !important; }
 .tape-wrap  { overflow: hidden; white-space: nowrap; }
 .tape-inner { display: inline-block; animation: tape-scroll 28s linear infinite; }
+
+.nova-logo { animation: logo-glow 3.2s ease-in-out infinite; }
+.live-dot  { width: 7px; height: 7px; border-radius: 50%; background: #00ff9d;
+             display: inline-block; margin-right: 6px; animation: live-blink 1.6s ease-in-out infinite; }
+
+.nova-card { transition: transform .18s ease, box-shadow .18s ease, background-color .3s ease; }
+.nova-card:hover { transform: translateY(-2px); }
+
+.scanner-grid > div { animation: rise-fade .35s ease both; }
+
+.rc-slider-track { background: linear-gradient(90deg, #f0b90b, #ffd23f) !important; height: 5px !important; }
+.rc-slider-rail  { background: #1e2936 !important; height: 5px !important; }
+.rc-slider-handle {
+    border: 2px solid #f0b90b !important; background: #0d1218 !important;
+    box-shadow: 0 0 10px rgba(240,185,11,.6) !important; width: 16px !important; height: 16px !important;
+    margin-top: -6px !important;
+}
+.rc-slider-handle:hover, .rc-slider-handle-dragging {
+    border-color: #ffd23f !important; box-shadow: 0 0 16px rgba(240,185,11,.9) !important;
+}
+.rc-slider-mark-text { color: #6b7280 !important; font-family: 'JetBrains Mono', monospace !important; font-size: 10px !important; }
+.rc-slider-tooltip-inner {
+    background: #f0b90b !important; color: #0b0e11 !important; font-weight: 800 !important;
+    font-family: 'JetBrains Mono', monospace !important; box-shadow: 0 4px 14px rgba(0,0,0,.4) !important;
+}
+.rc-slider-tooltip-arrow { border-top-color: #f0b90b !important; }
+
+input[type="checkbox"] { accent-color: #f0b90b; width: 15px; height: 15px; cursor: pointer; }
+
+#trade-log-box::-webkit-scrollbar { width: 6px; }
+#trade-log-box::-webkit-scrollbar-track { background: transparent; }
+#trade-log-box::-webkit-scrollbar-thumb { background: #1e2936; border-radius: 4px; }
+
+.help-badge {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 11px;
+    color: #f0b90b; border: 1px solid rgba(240,185,11,.35); padding: 4px 10px;
+    border-radius: 20px; background: rgba(240,185,11,.06); text-decoration: none;
+}
+.help-badge:hover { background: rgba(240,185,11,.14); }
 """
 
 
@@ -57,7 +122,8 @@ _last_seen_trade_id: dict[int, int] = {}
 
 def _card_style(extra=None):
     s = {"backgroundColor": C["card"], "border": f"1px solid {C['bdr']}",
-         "borderRadius": "10px", "padding": "10px 14px"}
+         "borderRadius": "12px", "padding": "10px 14px",
+         "boxShadow": "0 8px 24px rgba(0,0,0,.35)"}
     if extra:
         s.update(extra)
     return s
@@ -68,12 +134,23 @@ def _audio_el(elem_id, b64):
                        controls=False, autoPlay=False, style={"display": "none"})
 
 
+_GLOW = {
+    "white": "rgba(255,255,255,.25)", "#eaecef": "rgba(255,255,255,.25)",
+    C["green"]: "rgba(0,255,157,.5)", C["blue"]: "rgba(56,189,248,.5)",
+    C["gold"]: "rgba(240,185,11,.5)", C["purp"]: "rgba(192,132,252,.5)",
+}
+
+
 def _stat(label, elem_id, color="#eaecef"):
+    glow = _GLOW.get(color, "rgba(255,255,255,.2)")
     return html.Div([
         html.Div(label, style={"fontSize": "10px", "color": C["gray"],
-                               "textTransform": "uppercase", "letterSpacing": "1px"}),
-        html.Div("—", id=elem_id, style={"color": color, "fontWeight": "800",
-                                          "fontSize": "20px", "marginTop": "2px"}),
+                               "textTransform": "uppercase", "letterSpacing": "1.5px",
+                               "fontFamily": "'Space Grotesk', sans-serif", "fontWeight": "600"}),
+        html.Div("—", id=elem_id, style={
+            "color": color, "fontWeight": "800", "fontSize": "21px", "marginTop": "2px",
+            "fontFamily": "'JetBrains Mono', monospace",
+            "textShadow": f"0 0 14px {glow}"}),
     ], style={"textAlign": "center"})
 
 
@@ -119,8 +196,9 @@ def create_dash_app(flask_server):
 </html>"""
 
     app.layout = html.Div(
-        style={"backgroundColor": C["bg"], "color": "#eaecef", "padding": "14px 18px",
-               "fontFamily": "'Segoe UI', Arial, sans-serif", "minHeight": "100vh", "userSelect": "none"},
+        style={"backgroundColor": "transparent", "color": "#eaecef", "padding": "14px 18px",
+               "fontFamily": "'Space Grotesk', 'Segoe UI', Arial, sans-serif",
+               "minHeight": "100vh", "userSelect": "none"},
         children=[
             _audio_el("snd-buy", _BUY_WAV),
             _audio_el("snd-sell", _SELL_WAV),
@@ -128,8 +206,9 @@ def create_dash_app(flask_server):
             # ── ШАПКА ──
             html.Div([
                 html.Div([
-                    html.Div("⚡ NOVATION", style={"fontSize": "24px", "fontWeight": "900",
-                                                    "color": C["gold"], "letterSpacing": "2px"}),
+                    html.Div("⚡ NOVATION", className="nova-logo",
+                             style={"fontSize": "26px", "fontWeight": "900", "color": C["gold"],
+                                    "letterSpacing": "3px", "fontFamily": "'Space Grotesk', sans-serif"}),
                     html.Div(id="user-line", style={"fontSize": "11px", "color": C["gray"],
                                                       "marginTop": "2px"}),
                 ], style={"flex": "1"}),
@@ -145,33 +224,42 @@ def create_dash_app(flask_server):
                     _stat("СДЕЛОК", "hdr-trades", C["purp"]),
                 ], style={"display": "flex", "gap": "18px", "alignItems": "center",
                           "backgroundColor": C["card"], "padding": "10px 18px",
-                          "borderRadius": "10px", "border": f"1px solid {C['bdr']}"}),
+                          "borderRadius": "12px", "border": f"1px solid {C['bdr']}",
+                          "boxShadow": "0 8px 24px rgba(0,0,0,.35)"}),
                 html.Div([
-                    html.A("⚙ Настройки API-ключей", href="/settings", style={
-                        "color": C["gold"], "textDecoration": "none", "fontSize": "12px"}),
-                    html.Br(),
-                    html.A("Выйти", href="/logout", style={
-                        "color": C["gray"], "textDecoration": "none", "fontSize": "12px"}),
+                    html.A("❔ Как это работает", href="/help", target="_blank", className="help-badge"),
+                    html.Div([
+                        html.A("⚙ Настройки API-ключей", href="/settings", style={
+                            "color": C["gold"], "textDecoration": "none", "fontSize": "12px"}),
+                        html.Span(" · ", style={"color": C["gray"]}),
+                        html.A("Выйти", href="/logout", style={
+                            "color": C["gray"], "textDecoration": "none", "fontSize": "12px"}),
+                    ], style={"marginTop": "8px"}),
                 ], style={"marginLeft": "16px", "textAlign": "right"}),
             ], style={"display": "flex", "alignItems": "center",
                       "borderBottom": f"1px solid {C['bdr']}", "paddingBottom": "12px", "marginBottom": "12px"}),
 
             # ── ЛЕНТА ──
             html.Div([
-                html.Div("📡 FEED ▶", style={"color": C["gold"], "fontSize": "11px",
-                                              "padding": "0 14px 0 0", "flexShrink": "0",
-                                              "fontFamily": "monospace", "fontWeight": "700"}),
+                html.Div([
+                    html.Span(className="live-dot"),
+                    html.Span("LIVE FEED ▶", style={"color": C["gold"], "fontSize": "11px",
+                                                      "fontFamily": "'JetBrains Mono', monospace",
+                                                      "fontWeight": "700"}),
+                ], style={"padding": "0 14px 0 0", "flexShrink": "0", "display": "flex", "alignItems": "center"}),
                 html.Div(className="tape-wrap", style={"flex": "1", "overflow": "hidden"}, children=[
                     html.Div(id="live-tape", className="tape-inner",
-                             style={"color": C["green"], "fontSize": "12px", "fontFamily": "monospace"})
+                             style={"color": C["green"], "fontSize": "12px",
+                                    "fontFamily": "'JetBrains Mono', monospace"})
                 ])
             ], style={"display": "flex", "alignItems": "center", "backgroundColor": C["card"],
                       "borderRadius": "8px", "border": f"1px solid {C['bdr']}", "padding": "7px 14px",
                       "marginBottom": "12px", "height": "34px"}),
 
             # ── СКАНЕР ──
-            html.Div(id="scanner", style={"display": "grid", "gridTemplateColumns": "repeat(3, 1fr)",
-                                           "gap": "8px", "marginBottom": "12px"}),
+            html.Div(id="scanner", className="scanner-grid",
+                      style={"display": "grid", "gridTemplateColumns": "repeat(3, 1fr)",
+                             "gap": "8px", "marginBottom": "12px"}),
 
             # ── ОСНОВНОЙ БЛОК: график + панель ──
             html.Div([
@@ -182,7 +270,9 @@ def create_dash_app(flask_server):
                                      value="SOLUSDT", clearable=False,
                                      style={"width": "160px", "color": "#000", "fontSize": "13px"}),
                         html.Div(id="chart-price", style={"fontSize": "28px", "fontWeight": "900",
-                                                            "color": C["gold"], "marginLeft": "16px"}),
+                                                            "color": C["gold"], "marginLeft": "16px",
+                                                            "fontFamily": "'JetBrains Mono', monospace",
+                                                            "textShadow": f"0 0 18px {_GLOW.get(C['gold'])}"}),
                         html.Div(id="chart-signal", style={"marginLeft": "16px", "fontSize": "13px",
                                                               "fontWeight": "700"}),
                     ], style={"display": "flex", "alignItems": "center", "marginBottom": "8px"}),
@@ -191,8 +281,13 @@ def create_dash_app(flask_server):
 
                 html.Div([
                     html.Div([
-                        html.Div("⚙ ПАРАМЕТРЫ", style={"fontSize": "11px", "color": C["gray"],
-                                                          "marginBottom": "6px", "letterSpacing": "2px"}),
+                        html.Div([
+                            html.Span("⚙ ПАРАМЕТРЫ", style={"fontSize": "11px", "color": C["gray"],
+                                                              "letterSpacing": "2px"}),
+                            html.A("❔", href="/help#settings", target="_blank", title="Что означают эти настройки",
+                                   style={"color": C["gold"], "marginLeft": "8px", "textDecoration": "none",
+                                          "fontSize": "12px"}),
+                        ], style={"marginBottom": "6px"}),
 
                         html.Div([
                             html.Span("Бот активен", style={"fontSize": "12px"}),
@@ -345,13 +440,13 @@ def create_dash_app(flask_server):
             sig = sd["signal"]
 
             extra = {"textAlign": "center", "lineHeight": "1.7", "transition": "all 0.3s"}
-            card_cls = ""
+            card_cls = "nova-card"
             if sd["vol_shock"]:
                 extra["backgroundColor"] = "#1a0d2e"
-                card_cls = "pulse-purp"
+                card_cls += " pulse-purp"
             elif sig == "BUY":
                 extra["backgroundColor"] = "#0d2018"
-                card_cls = "pulse-buy"
+                card_cls += " pulse-buy"
             elif pos and pos.state == "HOLDING":
                 extra["backgroundColor"] = "#0d1f15"
             else:
@@ -373,12 +468,19 @@ def create_dash_app(flask_server):
             price_fmt = (f"${cur_p:,.6f}" if cur_p < 0.001 else f"${cur_p:,.4f}" if cur_p < 0.1
                          else f"${cur_p:,.3f}" if cur_p < 10 else f"${cur_p:,.2f}")
 
+            sig_color = SIG_C.get(sig, C["gray"])
             cards.append(html.Div([
-                html.Div(s.replace("USDT", ""), style={"fontSize": "14px", "fontWeight": "900"}),
-                html.Div(price_fmt, style={"fontSize": "13px", "fontWeight": "700"}),
-                html.Div(f"RSI {sd['rsi']}", style={"fontSize": "11px", "color": C["gray"]}),
-                html.Div(SIG_T.get(sig, ""), style={"color": SIG_C.get(sig, C["gray"]),
-                                                       "fontSize": "11px", "fontWeight": "800"}),
+                html.Div(s.replace("USDT", ""), style={"fontSize": "14px", "fontWeight": "900",
+                                                          "fontFamily": "'Space Grotesk', sans-serif",
+                                                          "letterSpacing": "1px"}),
+                html.Div(price_fmt, style={"fontSize": "13px", "fontWeight": "700",
+                                            "fontFamily": "'JetBrains Mono', monospace",
+                                            "textShadow": f"0 0 10px {_GLOW.get(C['gold'])}"}),
+                html.Div(f"RSI {sd['rsi']}", style={"fontSize": "11px", "color": C["gray"],
+                                                      "fontFamily": "'JetBrains Mono', monospace"}),
+                html.Div(SIG_T.get(sig, ""), style={"color": sig_color,
+                                                       "fontSize": "11px", "fontWeight": "800",
+                                                       "textShadow": f"0 0 10px {_GLOW.get(sig_color, 'rgba(255,255,255,.2)')}"}),
                 pnl_el, vol_badge,
                 html.Div(state_txt, style={"fontSize": "9px",
                                             "color": C["gold"] if (pos and pos.state == "HOLDING") else C["gray"]}),

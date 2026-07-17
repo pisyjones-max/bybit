@@ -96,7 +96,10 @@ def settings():
             cfg.rsi_entry = int(request.form.get("rsi_entry", cfg.rsi_entry))
             cfg.take_profit_pct = float(request.form.get("take_profit_pct", cfg.take_profit_pct))
             cfg.stop_loss_pct = float(request.form.get("stop_loss_pct", cfg.stop_loss_pct))
+            cfg.trailing_pct = float(request.form.get("trailing_pct", cfg.trailing_pct))
             cfg.max_open_positions = int(request.form.get("max_open_positions", cfg.max_open_positions))
+            cfg.max_daily_loss_usd = float(request.form.get("max_daily_loss_usd", cfg.max_daily_loss_usd))
+            cfg.cooldown_bars = int(request.form.get("cooldown_bars", cfg.cooldown_bars))
             cfg.is_active = request.form.get("is_active") == "on"
             db.session.commit()
             flash("Настройки сохранены", "success")
