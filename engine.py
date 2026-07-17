@@ -286,7 +286,10 @@ def _process_user(app, user: User):
 
         pos = positions_by_symbol.get(symbol)
         if pos is None:
-            pos = Position(user_id=user.id, symbol=symbol)
+            pos = Position(user_id=user.id, symbol=symbol,
+                           state="WAITING", entry_price=0.0, qty=0.0,
+                           peak_price=0.0, entry_time="", cooldown=0,
+                           daily_loss=0.0, last_trade_day="")
             db.session.add(pos)
             positions_by_symbol[symbol] = pos
 
