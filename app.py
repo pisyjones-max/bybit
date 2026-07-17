@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()  # должен выполниться ДО импорта models (там читается MASTER_KEY)
 
-from models import db, User  # noqa: E402
+from models import db, User, run_light_migrations  # noqa: E402
 from auth import auth_bp  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
@@ -67,6 +67,7 @@ def _protect_dash():
 
 with server.app_context():
     db.create_all()
+    run_light_migrations(db.engine)
 
 # Dash app + background engine imported after db is ready
 from dashboard import create_dash_app  # noqa: E402

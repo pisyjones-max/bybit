@@ -101,6 +101,7 @@ def settings():
             cfg.max_daily_loss_usd = float(request.form.get("max_daily_loss_usd", cfg.max_daily_loss_usd))
             cfg.cooldown_bars = int(request.form.get("cooldown_bars", cfg.cooldown_bars))
             cfg.is_active = request.form.get("is_active") == "on"
+            cfg.is_dry_run = request.form.get("is_dry_run") == "on"
             db.session.commit()
             flash("Настройки сохранены", "success")
 

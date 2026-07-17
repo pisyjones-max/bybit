@@ -24,6 +24,17 @@
 <form method="post">
     <input type="hidden" name="action" value="update_config">
 
+    <div class="checkbox-row" style="background:#132018;border:1px solid #245c3a;border-radius:8px;padding:8px 10px;">
+        <input type="checkbox" name="is_dry_run" id="is_dry_run" {% if cfg.is_dry_run %}checked{% endif %}>
+        <label for="is_dry_run" style="margin:0;">🧪 Dry-run (симуляция, без реальных ордеров)</label>
+    </div>
+    <div class="hint" style="margin-bottom:14px;">
+        Пока включено — бот считает сигналы и ведёт журнал сделок как обычно,
+        но <b>ни один ордер не отправляется на биржу</b>, деньги не тратятся.
+        Так можно проверить стратегию и настройки на живом рынке без риска.
+        Выключай, только когда убедился в результате журнала сделок.
+    </div>
+
     <div class="checkbox-row">
         <input type="checkbox" name="is_active" id="is_active" {% if cfg.is_active %}checked{% endif %}>
         <label for="is_active" style="margin:0;">Бот активен (торгует моими ключами)</label>
@@ -54,7 +65,7 @@
     <input type="number" name="max_open_positions" value="{{ cfg.max_open_positions }}">
 
     <label>Дневной лимит убытка (USD)</label>
-    <div class="hint">Если суммарный убыток за день достигнет этой суммы, бот перестаёт открывать новые сделки до следующего дня.</div>
+    <div class="hint">Если суммарный убыток за день <b>по всем монетам вместе</b> достигнет этой суммы, бот перестаёт открывать новые сделки до следующего дня.</div>
     <input type="number" step="0.5" name="max_daily_loss_usd" value="{{ cfg.max_daily_loss_usd }}">
 
     <label>Пауза после сделки (баров)</label>

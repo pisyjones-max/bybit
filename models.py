@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import datetime
 
@@ -7,6 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
+log = logging.getLogger("MIGRATIONS")
 
 # ───────────────────────────────────────────────────────────────
 #  ШИФРОВАНИЕ API-КЛЮЧЕЙ
@@ -77,6 +79,7 @@ class UserConfig(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, unique=True)
 
     is_active = db.Column(db.Boolean, default=False)   # бот торгует только если True
+    is_dry_run = db.Column(db.Boolean, default=True)    # True = симуляция, ордера на биржу НЕ идут
     buy_usdt = db.Column(db.Float, default=20.0)
     rsi_entry = db.Column(db.Integer, default=45)
     take_profit_pct = db.Column(db.Float, default=2.5)
@@ -105,6 +108,32 @@ class Position(db.Model):
     __table_args__ = (db.UniqueConstraint("user_id", "symbol", name="uq_user_symbol"),)
 
 
+def run_light_migrations(engine):
+    """
+    Простая авто-миграция без Alembic: db.create_all() создаёт только
+    отсутствующие ТАБЛИЦЫ, но не добавляет новые КОЛОНКИ в уже существующие
+    таблицы. При обновлении кода на проде (уже есть instance/novation.db
+    или Postgres с данными) — без этого приложение упадёт на первом же
+    обращении к новой колонке. Вызывать один раз при старте, после create_all().
+    """
+    from sqlalchemy import inspect, text
+
+    inspector = inspect(engine)
+    wanted_columns = {
+        "user_config": {"is_dry_run": "BOOLEAN DEFAULT 1"},
+        "trade": {"is_dry_run": "BOOLEAN DEFAULT 0 NOT NULL"},
+    }
+    with engine.begin() as conn:
+        for table, columns in wanted_columns.items():
+            if table not in inspector.get_table_names():
+                continue  # таблицу create_all() ещё создаст с нуля — колонка уже будет в схеме
+            existing = {c["name"] for c in inspector.get_columns(table)}
+            for col_name, col_def in columns.items():
+                if col_name not in existing:
+                    log.info(f"[migration] добавляю колонку {table}.{col_name}")
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_def}"))
+
+
 class Trade(db.Model):
     """Журнал сделок пользователя."""
     id = db.Column(db.Integer, primary_key=True)
@@ -115,3 +144,4 @@ class Trade(db.Model):
     price = db.Column(db.Float, nullable=False)
     qty = db.Column(db.Float, nullable=False)
     pnl = db.Column(db.Float, nullable=True)
+    is_dry_run = db.Column(db.Boolean, default=False, nullable=False)  # True = симулированная сделка, реальный ордер не отправлялся

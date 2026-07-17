@@ -16,7 +16,7 @@ import logging
 import threading
 import time
 from collections import deque
-from datetime import datetime
+from datetime import datetime, date, time as dtime
 
 import numpy as np
 import pandas as pd
@@ -161,23 +161,31 @@ def _safe_sell_qty(price: float, raw_qty: float) -> str:
 # ───────────────────────────────────────────────────────────────
 #  ТОРГОВЛЯ ДЛЯ ОДНОГО ПОЛЬЗОВАТЕЛЯ
 # ───────────────────────────────────────────────────────────────
-def _reset_daily_if_needed(pos: Position):
-    today = datetime.now().strftime("%Y-%m-%d")
-    if pos.last_trade_day != today:
-        pos.daily_loss = 0.0
-        pos.last_trade_day = today
+def _today_realized_loss_usd(user_id: int) -> float:
+    """
+    Суммарный реализованный убыток пользователя за СЕГОДНЯ по всем монетам
+    сразу (портфельно), а не по одной конкретной позиции.
+
+    Источник правды — журнал сделок Trade, а не мутируемое поле в Position:
+    так лимит переживает рестарт процесса и не может рассинхронизироваться
+    между несколькими открытыми позициями одного пользователя.
+    """
+    day_start = datetime.combine(date.today(), dtime.min)
+    rows = (db.session.query(Trade.pnl)
+            .filter(Trade.user_id == user_id, Trade.time >= day_start, Trade.pnl < 0)
+            .all())
+    return abs(sum(r[0] for r in rows)) if rows else 0.0
 
 
-def _can_buy(cfg: UserConfig, pos: Position, open_count: int, bal: float) -> tuple[bool, str]:
+def _can_buy(cfg: UserConfig, pos: Position, open_count: int, bal: float, today_loss: float) -> tuple[bool, str]:
     if pos.state == "HOLDING":
         return False, "уже в сделке"
     if pos.cooldown > 0:
         return False, f"cooldown {pos.cooldown}т"
     if open_count >= cfg.max_open_positions:
         return False, "лимит позиций"
-    _reset_daily_if_needed(pos)
-    if pos.daily_loss >= cfg.max_daily_loss_usd:
-        return False, "дневной лимит"
+    if today_loss >= cfg.max_daily_loss_usd:
+        return False, "дневной лимит (по всему счёту)"
     if bal < cfg.buy_usdt:
         return False, "мало USDT"
     return True, "OK"
@@ -249,6 +257,29 @@ def _place_sell(session: HTTP, user_id: int, symbol: str, cur_price: float) -> t
     return False, 0.0, 0.0
 
 
+def _execute_buy(session: HTTP, user_id: int, symbol: str, price: float, usdt: float,
+                  dry_run: bool) -> tuple[bool, float, float]:
+    """
+    dry_run=True: НИКАКОГО реального запроса на биржу. Симулируем полное
+    исполнение маркет-ордера по текущей цене тика — так можно безопасно
+    проверять стратегию и настройки на живом рынке, не рискуя деньгами.
+    """
+    if dry_run:
+        qty = usdt / price
+        return True, price, qty
+    return _place_buy(session, user_id, symbol, price, usdt)
+
+
+def _execute_sell(session: HTTP, user_id: int, symbol: str, cur_price: float,
+                   dry_run: bool, dry_qty: float) -> tuple[bool, float, float]:
+    """dry_run=True: продаём симулированное количество (из pos.qty), без обращения к бирже."""
+    if dry_run:
+        if dry_qty < 1e-9:
+            return False, 0.0, 0.0
+        return True, cur_price, dry_qty
+    return _place_sell(session, user_id, symbol, cur_price)
+
+
 def _get_usdt_balance(session: HTTP, user_id: int) -> float:
     try:
         b = session.get_wallet_balance(accountType="UNIFIED", coin="USDT")
@@ -270,14 +301,26 @@ def _process_user(app, user: User):
         log.error(f"[user {user.id}] не удалось расшифровать ключи: {e}")
         return
 
+    dry_run = cfg.is_dry_run
     session = _get_user_session(user.id, api_key, api_secret)
-    usdt_bal = _get_usdt_balance(session, user.id)
+
+    if dry_run and not (api_key and api_secret):
+        # Симуляция без реальных ключей: даём виртуальный баланс, чтобы можно
+        # было проверить стратегию ДО того, как пользователь вообще ввёл
+        # ключи Bybit. Как только ключи появятся — баланс станет настоящим.
+        usdt_bal = 10_000.0
+    else:
+        usdt_bal = _get_usdt_balance(session, user.id)
     last_balance[user.id] = usdt_bal
+
+    today_loss = _today_realized_loss_usd(user.id)
 
     positions_by_symbol = {p.symbol: p for p in user.positions}
     open_count = sum(1 for p in positions_by_symbol.values() if p.state == "HOLDING")
     msgs = live_status.setdefault(user.id, [])
     msgs.clear()
+    if dry_run:
+        msgs.append("🧪 DRY-RUN: реальные ордера НЕ отправляются, это симуляция")
 
     for symbol in SYMBOLS:
         if not histories[symbol]["price"]:
@@ -299,13 +342,14 @@ def _process_user(app, user: User):
         # выход
         ex_reason, ex_desc = _check_exit(cfg, pos, cur_price)
         if ex_reason:
-            ok, fill_price, raw_qty = _place_sell(session, user.id, symbol, cur_price)
+            ok, fill_price, raw_qty = _execute_sell(session, user.id, symbol, cur_price,
+                                                      dry_run, pos.qty)
             if ok:
                 pnl = (fill_price - pos.entry_price) * raw_qty
                 if pnl < 0:
-                    pos.daily_loss += abs(pnl)
+                    today_loss += abs(pnl)
                 trade = Trade(user_id=user.id, symbol=symbol, side=f"SELL({ex_reason})",
-                               price=fill_price, qty=raw_qty, pnl=pnl)
+                               price=fill_price, qty=raw_qty, pnl=pnl, is_dry_run=dry_run)
                 db.session.add(trade)
                 pos.state = "WAITING"
                 pos.entry_price = 0.0
@@ -314,15 +358,17 @@ def _process_user(app, user: User):
                 pos.entry_time = ""
                 pos.cooldown = cfg.cooldown_bars
                 open_count -= 1
-                msgs.append(f"💰 SELL {symbol} [{ex_reason}] {ex_desc} PnL={pnl:+.4f}$")
+                tag = "🧪" if dry_run else "💰"
+                msgs.append(f"{tag} SELL {symbol} [{ex_reason}] {ex_desc} PnL={pnl:+.4f}$")
             continue
 
         # вход
         sd = generate_signal(symbol, cfg.rsi_entry)
         if sd["signal"] == "BUY":
-            can, reason = _can_buy(cfg, pos, open_count, usdt_bal)
+            can, reason = _can_buy(cfg, pos, open_count, usdt_bal, today_loss)
             if can:
-                ok, fill_price, qty = _place_buy(session, user.id, symbol, cur_price, cfg.buy_usdt)
+                ok, fill_price, qty = _execute_buy(session, user.id, symbol, cur_price,
+                                                     cfg.buy_usdt, dry_run)
                 if ok:
                     pos.state = "HOLDING"
                     pos.entry_price = fill_price
@@ -331,12 +377,13 @@ def _process_user(app, user: User):
                     pos.entry_time = datetime.now().isoformat()
                     pos.cooldown = 0
                     trade = Trade(user_id=user.id, symbol=symbol, side="BUY",
-                                  price=fill_price, qty=qty, pnl=None)
+                                  price=fill_price, qty=qty, pnl=None, is_dry_run=dry_run)
                     db.session.add(trade)
                     usdt_bal -= cfg.buy_usdt
                     last_balance[user.id] = usdt_bal
                     open_count += 1
-                    msgs.append(f"🟢 BUY {symbol} @ ${fill_price:.5f} — {sd['desc']}")
+                    tag = "🧪" if dry_run else "🟢"
+                    msgs.append(f"{tag} BUY {symbol} @ ${fill_price:.5f} — {sd['desc']}")
             else:
                 msgs.append(f"🚫 {symbol} заблокирован: {reason}")
 

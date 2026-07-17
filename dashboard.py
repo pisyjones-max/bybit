@@ -432,7 +432,9 @@ def create_dash_app(flask_server):
         cfg = current_user.config
         uid = current_user.id
 
-        user_line = f"{current_user.email} — {'🟢 бот активен' if cfg.is_active else '⏸ бот выключен'}"
+        status = ('🧪 DRY-RUN (симуляция)' if cfg.is_dry_run and cfg.is_active
+                   else '🟢 бот активен' if cfg.is_active else '⏸ бот выключен')
+        user_line = f"{current_user.email} — {status}"
 
         positions = {p.symbol: p for p in Position.query.filter_by(user_id=uid).all()}
         open_count = sum(1 for p in positions.values() if p.state == "HOLDING")
