@@ -164,12 +164,16 @@ def rsi_divergence(prices: list, rsis: list) -> bool:
     return (p[-1] < p[-3]) and (r[-1] > r[-3])
 
 
-def generate_signal(symbol: str, rsi_entry_threshold: int) -> dict:
-    """Сигнал зависит от порога RSI пользователя, остальное общее."""
-    h = histories[symbol]
-    prices = list(h["price"])
-    volumes = list(h["volume"])
-
+def generate_signal_from_series(prices: list, volumes: list, rsi_hist: list,
+                                 rsi_entry_threshold: int) -> dict:
+    """
+    ЧИСТАЯ функция сигнала — не трогает никакое глобальное состояние.
+    Единственный источник истины для торговой логики: и live-движок
+    (через generate_signal ниже), и бэктестер (backtest.py) вызывают
+    ИМЕННО ЭТУ функцию. Так гарантированно исключено расхождение между
+    тем, что было проверено на истории, и тем, что реально торгуется —
+    частая причина, по которой бэктест "врёт" в других ботах.
+    """
     result = {"signal": "NEUTRAL", "rsi": 50.0, "vol_ratio": 1.0,
               "vol_shock": False, "divergence": False, "desc": "мало данных"}
 
@@ -186,7 +190,7 @@ def generate_signal(symbol: str, rsi_entry_threshold: int) -> dict:
     shock = vr >= VOL_SHOCK_MULT
     vol_ok = vr >= VOL_OK_MULT
     up = e_fast > e_slow
-    diverg = rsi_divergence(prices, list(rsi_history[symbol]))
+    diverg = rsi_divergence(prices, rsi_hist)
 
     result.update({"rsi": rsi, "vol_ratio": vr, "vol_shock": shock, "divergence": diverg})
 
@@ -201,6 +205,14 @@ def generate_signal(symbol: str, rsi_entry_threshold: int) -> dict:
         result.update({"signal": "NEUTRAL", "desc": f"RSI {rsi}"})
 
     return result
+
+
+def generate_signal(symbol: str, rsi_entry_threshold: int) -> dict:
+    """Тонкая live-обёртка: берёт данные из глобальных deque движка и зовёт чистую функцию."""
+    h = histories[symbol]
+    prices = list(h["price"])
+    volumes = list(h["volume"])
+    return generate_signal_from_series(prices, volumes, list(rsi_history[symbol]), rsi_entry_threshold)
 
 
 def _qty_str(price: float, usdt: float) -> str:
