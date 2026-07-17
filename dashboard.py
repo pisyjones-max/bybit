@@ -65,10 +65,33 @@ body {
 .live-dot  { width: 7px; height: 7px; border-radius: 50%; background: #00ff9d;
              display: inline-block; margin-right: 6px; animation: live-blink 1.6s ease-in-out infinite; }
 
-.nova-card { transition: transform .18s ease, box-shadow .18s ease, background-color .3s ease; }
-.nova-card:hover { transform: translateY(-2px); }
+.nova-card {
+    backdrop-filter: blur(10px) saturate(130%);
+    -webkit-backdrop-filter: blur(10px) saturate(130%);
+    transition: transform .2s cubic-bezier(.16,1,.3,1), box-shadow .2s ease, background-color .3s ease, border-color .2s ease;
+}
+.nova-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 32px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.04) inset;
+    border-color: rgba(240,185,11,.25) !important;
+}
+.nova-card, .nova-card * { font-variant-numeric: tabular-nums; }
 
-.scanner-grid > div { animation: rise-fade .35s ease both; }
+.scanner-grid > div { animation: rise-fade .35s cubic-bezier(.16,1,.3,1) both; }
+
+@keyframes shimmer { 0% { background-position: -300px 0; } 100% { background-position: 300px 0; } }
+.skeleton {
+    background: linear-gradient(90deg, #12161c 25%, #1c232c 37%, #12161c 63%);
+    background-size: 400px 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+    border-radius: 8px;
+    color: transparent !important;
+}
+
+:focus-visible { outline: 2px solid #f0b90b; outline-offset: 2px; border-radius: 4px; }
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+}
 
 .rc-slider-track { background: linear-gradient(90deg, #f0b90b, #ffd23f) !important; height: 5px !important; }
 .rc-slider-rail  { background: #1e2936 !important; height: 5px !important; }

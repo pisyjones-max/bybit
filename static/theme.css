@@ -24,6 +24,18 @@
 
 html { scroll-behavior: smooth; }
 
+:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+::selection { background: rgba(240,185,11,.25); color: var(--text); }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+}
+
 body {
     background:
         radial-gradient(circle at 15% 0%, rgba(240, 185, 11, .07), transparent 40%),
@@ -43,13 +55,15 @@ body {
 
 .box {
     position: relative;
-    background: linear-gradient(180deg, var(--card2) 0%, var(--card) 100%);
+    background: linear-gradient(180deg, rgba(22,27,34,.82) 0%, rgba(18,22,28,.9) 100%);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
     border: 1px solid var(--bdr);
     border-radius: 14px;
     padding: 34px 32px;
     width: 340px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.02) inset;
-    animation: rise .5s ease both;
+    box-shadow: 0 24px 70px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.03) inset, 0 1px 0 rgba(255,255,255,.04) inset;
+    animation: rise .5s cubic-bezier(.16,1,.3,1) both;
 }
 
 .box::before {
@@ -95,6 +109,7 @@ input, button, select {
     color: var(--text);
     font-size: 14px;
     font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
     transition: border-color .15s ease, box-shadow .15s ease;
 }
 
@@ -178,13 +193,21 @@ a:hover { text-decoration: underline; }
 .help-nav a:hover { border-color: var(--gold); color: var(--gold); text-decoration: none; }
 
 .help-section {
-    background: linear-gradient(180deg, var(--card2), var(--card));
+    background: linear-gradient(180deg, rgba(22,27,34,.7), rgba(18,22,28,.8));
+    backdrop-filter: blur(14px) saturate(130%);
+    -webkit-backdrop-filter: blur(14px) saturate(130%);
     border: 1px solid var(--bdr);
     border-radius: 14px;
     padding: 24px 26px;
     margin-bottom: 20px;
     position: relative;
     overflow: hidden;
+    transition: transform .2s cubic-bezier(.16,1,.3,1), box-shadow .2s ease, border-color .2s ease;
+}
+.help-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 34px rgba(0,0,0,.4);
+    border-color: rgba(240,185,11,.25);
 }
 .help-section::before {
     content: "";
@@ -236,3 +259,17 @@ a:hover { text-decoration: underline; }
 }
 
 .back-row { text-align: center; margin: 30px 0 10px; }
+
+/* ── Skeleton / shimmer loading state ── */
+@keyframes shimmer {
+    0%   { background-position: -300px 0; }
+    100% { background-position: 300px 0; }
+}
+.skeleton {
+    background: linear-gradient(90deg, var(--card) 25%, #1c232c 37%, var(--card) 63%);
+    background-size: 400px 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+    border-radius: 8px;
+    color: transparent !important;
+    pointer-events: none;
+}
