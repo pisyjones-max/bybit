@@ -120,8 +120,8 @@ def run_light_migrations(engine):
 
     inspector = inspect(engine)
     wanted_columns = {
-        "user_config": {"is_dry_run": "BOOLEAN DEFAULT 1"},
-        "trade": {"is_dry_run": "BOOLEAN DEFAULT 0 NOT NULL"},
+        "user_config": {"is_dry_run": "BOOLEAN DEFAULT TRUE"},
+        "trade": {"is_dry_run": "BOOLEAN DEFAULT FALSE NOT NULL"},
     }
     with engine.begin() as conn:
         for table, columns in wanted_columns.items():
