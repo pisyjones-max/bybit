@@ -5,6 +5,7 @@ from dash import Dash, dcc, html, Input, Output, State
 from flask_login import current_user
 
 import engine
+import strategy
 from models import db, Position, Trade
 
 C = {
@@ -519,15 +520,15 @@ def create_dash_app(flask_server):
         if len(h["price"]) > 3:
             prices = list(h["price"])
             times = list(h["time"])
-            ema_f = engine.calc_ema(prices, engine.EMA_FAST)
-            ema_s = engine.calc_ema(prices, engine.EMA_SLOW)
+            ema_f = strategy.calc_ema(prices, strategy.EMA_FAST)
+            ema_s = strategy.calc_ema(prices, strategy.EMA_SLOW)
 
             fig.add_trace(go.Scatter(x=times, y=prices, name="Price",
                                       line=dict(color=C["gold"], width=2.5),
                                       hovertemplate="$%{y:,.6f}<extra></extra>"))
-            fig.add_trace(go.Scatter(x=times, y=ema_f, name=f"EMA{engine.EMA_FAST}",
+            fig.add_trace(go.Scatter(x=times, y=ema_f, name=f"EMA{strategy.EMA_FAST}",
                                       line=dict(color=C["blue"], width=1.2, dash="dot")))
-            fig.add_trace(go.Scatter(x=times, y=ema_s, name=f"EMA{engine.EMA_SLOW}",
+            fig.add_trace(go.Scatter(x=times, y=ema_s, name=f"EMA{strategy.EMA_SLOW}",
                                       line=dict(color="#fb923c", width=1.2, dash="dot")))
 
             pos = positions.get(symbol)
